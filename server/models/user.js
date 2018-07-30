@@ -2,16 +2,8 @@ var mongoose = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
-// {
-//   email: 'wakootanga@gmail.com',
-//   password: 'aaaasaddsdsd',
-//   tokens: [{
-//     access: 'auth',
-//     token: 'qyoeirioywioerhoer'
-//   }]
-// }
+const bcrypt = require('bcryptjs');
 var UserSchema = new mongoose.Schema({
-
   email: {
     type: String,
     required:true,
@@ -73,6 +65,21 @@ UserSchema.statics.findByToken = function(token){
     'tokens.access': 'auth'
   })
 };
+
+//json middle-ware perform a function before saving a collection
+UserSchema.pre('save', function(next){
+  var user = this;
+  if(user.isModified('password')){
+    bcrypt.genSalt(10, (err,salt) =>{
+      bcrypt.hash(user.password, salt, (err, hash) =>{
+          user.password = hash;
+          next();
+      });
+    });
+  }else{
+    next();
+  }
+});
 
 var User = mongoose.model('Users', UserSchema);
 
